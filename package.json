@@ -1,0 +1,39 @@
+{
+	"name": "food-delivery-backend",
+	"version": "1.0.0",
+	"description": "Food Delivery Backend",
+	"author": "Bryan Cho",
+	"main": "app.js",
+	"scripts": {
+		"start": "node ./app.js",
+		"dev": "nodemon ./app.js",
+		"stop": "lsof -ti :3000 | xargs kill"
+	},
+	"dependencies": {
+		"body-parser": "^1.18.3",
+		"cors": "2.7.1",
+		"ejs": "2.4.1",
+		"errorhandler": "1.4.3",
+		"express": "^4.16.3",
+		"express-jwt": "3.3.0",
+		"express-session": "^1.15.6",
+		"jsonwebtoken": "7.1.9",
+		"method-override": "2.3.5",
+		"methods": "1.1.2",
+		"mongoose": "4.4.10",
+		"mongoose-unique-validator": "1.0.2",
+		"morgan": "^1.9.0",
+		"passport": "0.3.2",
+		"passport-local": "1.0.0",
+		"request": "^2.87.0",
+		"slug": "0.9.1",
+		"underscore": "1.8.3"
+	},
+	"devDependencies": {
+		"eslint": "^6.6.0",
+		"eslint-config-prettier": "^6.7.0",
+		"eslint-plugin-prettier": "^3.1.1",
+		"nodemon": "^2.0.2",
+		"prettier": "^1.19.1"
+	}
+}
