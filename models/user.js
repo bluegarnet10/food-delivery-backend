@@ -15,7 +15,7 @@ var UserSchema = new mongoose.Schema(
 			match: [/\S+@\S+\.\S+/, 'is invalid'],
 			index: true,
 		},
-		full_name: String,
+		name: String,
 		role: String,
 		// Others
 		hash: String,
@@ -55,7 +55,7 @@ UserSchema.methods.toJSON = function() {
 	return {
 		_id: this._id,
 		email: this.email,
-		full_name: this.full_name,
+		name: this.name,
 		role: this.role,
 		token: this.generateJWT(),
 	};
@@ -65,7 +65,7 @@ UserSchema.methods.toUserJSON = function() {
 	return {
 		_id: this._id,
 		email: this.email,
-		full_name: this.full_name,
+		name: this.name,
 		role: this.role,
 	};
 };

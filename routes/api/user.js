@@ -35,8 +35,8 @@ router.post('/signup', (req, res, next) => {
 	if (!req.body.password) {
 		return res.status(422).json({ errors: { password: 'This field is required' } });
 	}
-	if (!req.body.full_name) {
-		return res.status(422).json({ errors: { full_name: 'This field is required' } });
+	if (!req.body.name) {
+		return res.status(422).json({ errors: { name: 'This field is required' } });
 	}
 	if (req.body.role !== 'user' && req.body.role !== 'owner') {
 		return res.status(422).json({ errors: { role: 'Invalid role' } });
@@ -51,7 +51,7 @@ router.post('/signup', (req, res, next) => {
 			var user = new User();
 			user.email = req.body.email;
 			user.setPassword(req.body.password);
-			user.full_name = req.body.full_name;
+			user.name = req.body.name;
 			user.role = req.body.role;
 
 			user.save()
