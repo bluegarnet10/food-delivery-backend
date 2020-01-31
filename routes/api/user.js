@@ -56,7 +56,7 @@ router.post('/signup', (req, res, next) => {
 
 			user.save()
 				.then(() => {
-					return res.status(200).json({ user: user.toJSON() });
+					return res.status(200).json({ user: user.toUserJSON() });
 				})
 				.catch(next);
 		})
