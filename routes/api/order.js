@@ -103,7 +103,7 @@ router.get('/', auth.required, (req, res, next) => {
 							'Access-Control-Expose-Headers': 'X-Total-Count',
 						})
 						.json({
-							orders: orders.map(order => {
+							orders: orders.map(async order => {
 								const histories = await History.find({ order_id: order._id });
 								return {
 									...order.toJSON(),
@@ -136,7 +136,7 @@ router.get('/:id', auth.required, (req, res, next) => {
 					  };
 
 			Order.findOne(findQuery)
-				.then(order => {
+				.then(async order => {
 					if (!order) {
 						return res.status(401).json({ errors: { order: 'Order does not exist' } });
 					}
@@ -207,7 +207,7 @@ router.put('/:id', auth.required, (req, res, next) => {
 
 					order
 						.save()
-						.then(() => {
+						.then(async () => {
 							const histories = await History.find({ order_id: order._id });
 							return res.status(200).json({
 								order: {
