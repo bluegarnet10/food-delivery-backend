@@ -63,8 +63,14 @@ router.post('/', auth.required, (req, res, next) => {
 
 			await updateStatus(order, 'Placed');
 			await order.save();
+			const histories = await History.find({ order_id: order._id });
 
-			return res.status(200).json({ order: { ...order.toJSON(), history: [history] } });
+			return res.status(200).json({
+				order: {
+					...order.toJSON(),
+					history: histories.map(history => history.toJSON()),
+				},
+			});
 		})
 		.catch(next);
 });
@@ -98,7 +104,11 @@ router.get('/', auth.required, (req, res, next) => {
 						})
 						.json({
 							orders: orders.map(order => {
-								return { ...order.toJSON(), history: History.find({ order_id: order._id }) };
+								const histories = await History.find({ order_id: order._id });
+								return {
+									...order.toJSON(),
+									history: histories.map(history => history.toJSON()),
+								};
 							}),
 						});
 				})
@@ -131,9 +141,14 @@ router.get('/:id', auth.required, (req, res, next) => {
 						return res.status(401).json({ errors: { order: 'Order does not exist' } });
 					}
 
-					return res
-						.status(200)
-						.json({ order: { ...order.toJSON(), history: History.find({ order_id: order._id }) } });
+					const histories = await History.find({ order_id: order._id });
+
+					return res.status(200).json({
+						order: {
+							...order.toJSON(),
+							history: histories.map(history => history.toJSON()),
+						},
+					});
 				})
 				.catch(next);
 		})
@@ -193,9 +208,13 @@ router.put('/:id', auth.required, (req, res, next) => {
 					order
 						.save()
 						.then(() => {
-							return res
-								.status(200)
-								.json({ order: { ...order.toJSON(), history: History.find({ order_id: order._id }) } });
+							const histories = await History.find({ order_id: order._id });
+							return res.status(200).json({
+								order: {
+									...order.toJSON(),
+									history: histories.map(history => history.toJSON()),
+								},
+							});
 						})
 						.catch(next);
 				})
