@@ -97,7 +97,11 @@ router.post('/block', auth.required, (req, res, next) => {
 						return res.status(401).json({ errors: { user: 'Invalid user role' } });
 					}
 
-					await cancelOrders(owner._id, user._id);
+					try {
+						await cancelOrders(owner._id, user._id);
+					} catch (e) {
+						console.log(e);
+					}
 
 					Block.findOne({ owner_id: req.payload.id, user_id: req.body.user_id }).then(result => {
 						if (result) {

@@ -156,8 +156,16 @@ router.delete('/:id', auth.required, (req, res, next) => {
 							.json({ errors: { restaurant: 'You are not the owner of this restaurant' } });
 					}
 
-					await Meals.update({ restaurant_id: restaurant._id }, { deleted: true }, { multi: true });
-					await cancelOrders(restaurant_id);
+					try {
+						await Meals.update({ restaurant_id: restaurant._id }, { deleted: true }, { multi: true });
+					} catch (e) {
+						console.log(e);
+					}
+					try {
+						await cancelOrders(restaurant_id);
+					} catch (e) {
+						console.log(e);
+					}
 
 					restaurant.deleted = true;
 					restaurant
@@ -385,7 +393,11 @@ router.delete('/:id/meal/:meal_id', auth.required, (req, res, next) => {
 									.json({ errors: { meal: 'This meal is not in this restaurant' } });
 							}
 
-							await cancelOrders(restaurant._id, meal._id);
+							try {
+								await cancelOrders(restaurant._id, meal._id);
+							} catch (e) {
+								console.log(e);
+							}
 
 							meal.deleted = true;
 							meal.save()
