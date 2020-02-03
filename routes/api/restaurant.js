@@ -5,7 +5,7 @@ var Restaurant = mongoose.model('restaurant');
 var Meal = mongoose.model('meal');
 var auth = require('../auth');
 
-const DEFAULT_ROW = 10;
+const DEFAULT_ROW = 5;
 
 router.post('/', auth.required, (req, res, next) => {
 	if (!req.body.name) {
