@@ -43,6 +43,7 @@ require('./models/restaurant');
 require('./models/meal');
 require('./models/order');
 require('./models/history');
+require('./models/order_meal');
 
 require('./config/passport');
 

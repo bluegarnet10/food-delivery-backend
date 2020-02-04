@@ -6,6 +6,7 @@ var Restaurant = mongoose.model('restaurant');
 var Meal = mongoose.model('meal');
 var Order = mongoose.model('order');
 var History = mongoose.model('history');
+var OrderMeal = mongoose.model('order_meal');
 var auth = require('../auth');
 
 const DEFAULT_ROW = 10;
@@ -43,14 +44,12 @@ router.post('/', auth.required, (req, res, next) => {
 			}
 
 			var total_price = 0;
-			var meal_list = [];
 			const meals = await Meal.find({ restaurant_id: req.body.restaurant_id, deleted: false });
 			for (let i = 0; i < req.body.meal_list.length; i++) {
 				const meal = meals.find(m => m._id.toString() === req.body.meal_list[i]);
 				if (!meal) {
 					return res.status(404).json({ errors: { meal: 'Meal does not exist in this restaurant' } });
 				}
-				meal_list.push({ meal_id: meal._id, price: meal.price });
 				total_price += meal.price;
 			}
 
@@ -58,18 +57,25 @@ router.post('/', auth.required, (req, res, next) => {
 			order.user_id = user._id;
 			order.owner_id = owner._id;
 			order.restaurant_id = restaurant._id;
-			order.meal_list = meal_list;
+			order.restaurant_name = restaurant.name;
 			order.total_price = total_price;
+
+			for (let i = 0; i < req.body.meal_list.length; i++) {
+				const meal = meals.find(m => m._id.toString() === req.body.meal_list[i]);
+				const orderMeal = new OrderMeal();
+				orderMeal.order_id = order._id;
+				orderMeal.meal_id = meal._id;
+				orderMeal.name = meal.name;
+				orderMeal.description = meal.description;
+				orderMeal.price = meal.price;
+				orderMeal.save();
+			}
 
 			await updateStatus(order, 'Placed');
 			await order.save();
-			const histories = await History.find({ order_id: order._id });
 
 			return res.status(200).json({
-				order: {
-					...order.toJSON(),
-					history: histories.map(history => history.toJSON()),
-				},
+				order: order.toJSON(),
 			});
 		})
 		.catch(next);
@@ -103,13 +109,7 @@ router.get('/', auth.required, (req, res, next) => {
 							'Access-Control-Expose-Headers': 'X-Total-Count',
 						})
 						.json({
-							orders: orders.map(async order => {
-								const histories = await History.find({ order_id: order._id });
-								return {
-									...order.toJSON(),
-									history: histories.map(history => history.toJSON()),
-								};
-							}),
+							orders: orders.map(order => order.toJSON()),
 						});
 				})
 				.catch(next);
@@ -142,11 +142,13 @@ router.get('/:id', auth.required, (req, res, next) => {
 					}
 
 					const histories = await History.find({ order_id: order._id });
+					const orderMeals = await OrderMeal.find({ order_id: order._id });
 
 					return res.status(200).json({
 						order: {
 							...order.toJSON(),
 							history: histories.map(history => history.toJSON()),
+							meal_list: orderMeals.map(meal => meal.toJSON()),
 						},
 					});
 				})
@@ -208,12 +210,8 @@ router.put('/:id', auth.required, (req, res, next) => {
 					order
 						.save()
 						.then(async () => {
-							const histories = await History.find({ order_id: order._id });
 							return res.status(200).json({
-								order: {
-									...order.toJSON(),
-									history: histories.map(history => history.toJSON()),
-								},
+								order: order.toJSON(),
 							});
 						})
 						.catch(next);
