@@ -147,7 +147,7 @@ router.get('/:id', auth.required, (req, res, next) => {
 					return res.status(200).json({
 						order: {
 							...order.toJSON(),
-							history: histories.map(history => history.toJSON()),
+							histories: histories.map(history => history.toJSON()),
 							meal_list: orderMeals.map(meal => meal.toJSON()),
 						},
 					});
