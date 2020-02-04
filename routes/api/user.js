@@ -2,7 +2,6 @@ var mongoose = require('mongoose');
 var router = require('express').Router();
 var passport = require('passport');
 var User = mongoose.model('user');
-var Block = mongoose.model('block');
 var Order = mongoose.model('order');
 var History = mongoose.model('order');
 var auth = require('../auth');
@@ -70,85 +69,6 @@ router.get('/user', auth.required, (req, res, next) => {
 				return res.status(401).json({ errors: { user: 'Unauthorized' } });
 			}
 			return res.status(200).json({ user: user.toUserJSON() });
-		})
-		.catch(next);
-});
-
-router.post('/block', auth.required, (req, res, next) => {
-	if (!req.body.user_id) {
-		return res.status(422).json({ errors: { user: 'This field is required' } });
-	}
-
-	User.findById(req.payload.id)
-		.then(owner => {
-			if (!owner) {
-				return res.status(401).json({ errors: { user: 'Unauthorized' } });
-			}
-			if (owner.role !== 'owner') {
-				return res.status(401).json({ errors: { user: 'Invalid user role' } });
-			}
-
-			User.findById(req.body.user_id)
-				.then(async user => {
-					if (!user) {
-						return res.status(404).json({ errors: { user: 'Invalid user id' } });
-					}
-					if (user.role !== 'user') {
-						return res.status(401).json({ errors: { user: 'Invalid user role' } });
-					}
-
-					try {
-						await cancelOrders(owner._id, user._id);
-					} catch (e) {
-						console.log(e);
-					}
-
-					Block.findOne({ owner_id: req.payload.id, user_id: req.body.user_id }).then(result => {
-						if (result) {
-							return res.status(409).json({ errors: { block: 'The user is already blocked' } });
-						}
-
-						var block = new Block();
-						block.owner_id = req.payload.id;
-						block.user_id = req.body.user_id;
-						block
-							.save()
-							.then(() => {
-								return res.status(200).json({ success: 'The user has been blocked' });
-							})
-							.catch(next);
-					});
-				})
-				.catch(next);
-		})
-		.catch(next);
-});
-
-router.post('/unblock', auth.required, (req, res, next) => {
-	if (!req.body.user_id) {
-		return res.status(422).json({ errors: { user: 'This field is required' } });
-	}
-
-	User.findById(req.payload.id)
-		.then(async owner => {
-			if (!owner) {
-				return res.status(401).json({ errors: { user: 'Unauthorized' } });
-			}
-			if (owner.role !== 'owner') {
-				return res.status(401).json({ errors: { user: 'Invalid user role' } });
-			}
-
-			Block.findOne({ owner_id: req.payload.id, user_id: req.body.user_id }).then(result => {
-				if (!result) {
-					return res.status(401).json({ errors: { block: 'The user is already unblocked' } });
-				}
-
-				Block.remove({ owner_id: req.payload.id, user_id: req.body.user_id })
-					.then(() => {
-						return res.status(200).json({ success: 'The user has been unblocked' });
-					})
-					.catch(next);
-			});
 		})
 		.catch(next);
 });
