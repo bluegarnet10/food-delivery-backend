@@ -55,8 +55,8 @@ router.post('/', auth.required, (req, res, next) => {
 
 			var total_price = 0;
 			const meals = await Meal.find({ restaurant_id: req.body.restaurant_id, deleted: false });
-			for (let i = 0; i < req.body.meal_list.length; i++) {
-				const meal = meals.find(m => m._id.toString() === req.body.meal_list[i]);
+			for (meal_id of req.body.meal_list) {
+				const meal = meals.find(m => m._id.toString() === meal_id);
 				if (!meal) {
 					return res.status(404).json({
 						errors: {
@@ -75,8 +75,8 @@ router.post('/', auth.required, (req, res, next) => {
 			order.restaurant_name = restaurant.name;
 			order.total_price = total_price;
 
-			for (let i = 0; i < req.body.meal_list.length; i++) {
-				const meal = meals.find(m => m._id.toString() === req.body.meal_list[i]);
+			for (meal_id of req.body.meal_list) {
+				const meal = meals.find(m => m._id.toString() === meal_id);
 				const orderMeal = new OrderMeal();
 				orderMeal.order_id = order._id;
 				orderMeal.meal_id = meal._id;
