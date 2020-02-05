@@ -9,19 +9,21 @@ const DEFAULT_ROW = 5;
 
 router.post('/', auth.required, (req, res, next) => {
 	if (!req.body.name) {
-		return res.status(422).json({ errors: { name: 'This field is required' } });
+		return res.status(422).json({ errors: { message: 'Name is required', name: 'This field is required' } });
 	}
 	if (!req.body.description) {
-		return res.status(422).json({ errors: { description: 'This field is required' } });
+		return res
+			.status(422)
+			.json({ errors: { message: 'Description is required', description: 'This field is required' } });
 	}
 
 	User.findById(req.payload.id)
 		.then(owner => {
 			if (!owner) {
-				return res.status(401).json({ errors: { user: 'Unauthorized' } });
+				return res.status(401).json({ errors: { message: 'Unauthroized', user: 'Unauthorized' } });
 			}
 			if (owner.role !== 'owner') {
-				return res.status(401).json({ errors: { user: 'Invalid user role' } });
+				return res.status(401).json({ errors: { message: 'Invalid user role', user: 'Invalid user role' } });
 			}
 
 			var restaurant = new Restaurant();
@@ -32,7 +34,10 @@ router.post('/', auth.required, (req, res, next) => {
 			restaurant
 				.save()
 				.then(() => {
-					return res.status(200).json({ restaurant: restaurant.toJSON() });
+					return res.status(200).json({
+						message: 'The restaurant has been added successfully',
+						restaurant: restaurant.toJSON(),
+					});
 				})
 				.catch(next);
 		})
@@ -43,7 +48,7 @@ router.get('/', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(async user => {
 			if (!user) {
-				return res.status(401).json({ errors: { user: 'Unauthorized' } });
+				return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
 			}
 
 			const row = parseInt(req.query._row) || DEFAULT_ROW;
@@ -81,18 +86,23 @@ router.get('/:id', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(user => {
 			if (!user) {
-				return res.status(401).json({ errors: { user: 'Unauthorized' } });
+				return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
 			}
 
 			Restaurant.findById(req.params.id)
 				.then(restaurant => {
 					if (!restaurant) {
-						return res.status(401).json({ errors: { restaurant: 'Restaurant does not exist' } });
+						return res.status(401).json({
+							errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
+						});
 					}
 					if (user.role === 'owner' && restaurant.owner_id !== req.payload.id) {
-						return res
-							.status(401)
-							.json({ errors: { restaurant: 'You are not the owner of this restaurant' } });
+						return res.status(401).json({
+							errors: {
+								message: 'You are not the owner of this restaurant',
+								restaurant: 'You are not the owner of this restaurant',
+							},
+						});
 					}
 
 					return res.status(200).json({ restaurant: restaurant.toJSON() });
@@ -106,18 +116,23 @@ router.put('/:id', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(user => {
 			if (!user) {
-				return res.status(401).json({ errors: { user: 'Unauthorized' } });
+				return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
 			}
 
 			Restaurant.findOne({ _id: req.params.id, deleted: false })
 				.then(restaurant => {
 					if (!restaurant) {
-						return res.status(401).json({ errors: { restaurant: 'Restaurant does not exist' } });
+						return res.status(401).json({
+							errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
+						});
 					}
 					if (user.role !== 'owner' || restaurant.owner_id !== req.payload.id) {
-						return res
-							.status(401)
-							.json({ errors: { restaurant: 'You are not the owner of this restaurant' } });
+						return res.status(401).json({
+							errors: {
+								message: 'You are not the owner of this restaurant',
+								restaurant: 'You are not the owner of this restaurant',
+							},
+						});
 					}
 
 					if (req.body.name) {
@@ -129,7 +144,10 @@ router.put('/:id', auth.required, (req, res, next) => {
 					restaurant
 						.save()
 						.then(() => {
-							return res.status(200).json({ restaurant: restaurant.toJSON() });
+							return res.status(200).json({
+								message: 'The restaurant has been updated successfully',
+								restaurant: restaurant.toJSON(),
+							});
 						})
 						.catch(next);
 				})
@@ -142,18 +160,23 @@ router.delete('/:id', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(user => {
 			if (!user) {
-				return res.status(401).json({ errors: { user: 'Unauthorized' } });
+				return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
 			}
 
 			Restaurant.findById(req.params.id)
 				.then(async restaurant => {
 					if (!restaurant) {
-						return res.status(401).json({ errors: { restaurant: 'Restaurant does not exist' } });
+						return res.status(401).json({
+							errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
+						});
 					}
 					if (user.role !== 'owner' || restaurant.owner_id !== req.payload.id) {
-						return res
-							.status(401)
-							.json({ errors: { restaurant: 'You are not the owner of this restaurant' } });
+						return res.status(401).json({
+							errors: {
+								message: 'You are not the owner of this restaurant',
+								restaurant: 'You are not the owner of this restaurant',
+							},
+						});
 					}
 
 					try {
@@ -171,7 +194,7 @@ router.delete('/:id', auth.required, (req, res, next) => {
 					restaurant
 						.save()
 						.then(() => {
-							return res.status(200).json({ success: 'The restaurant has been removed successfully' });
+							return res.status(200).json({ message: 'The restaurant has been removed successfully' });
 						})
 						.catch(next);
 				})
@@ -182,30 +205,37 @@ router.delete('/:id', auth.required, (req, res, next) => {
 
 router.post('/:id/meal', auth.required, (req, res, next) => {
 	if (!req.body.name) {
-		return res.status(422).json({ errors: { name: 'This field is required' } });
+		return res.status(422).json({ errors: { message: 'Name is required', name: 'This field is required' } });
 	}
 	if (!req.body.description) {
-		return res.status(422).json({ errors: { description: 'This field is required' } });
+		return res
+			.status(422)
+			.json({ errors: { message: 'Description is required', description: 'This field is required' } });
 	}
 	if (!req.body.price) {
-		return res.status(422).json({ errors: { price: 'This field is required' } });
+		return res.status(422).json({ errors: { message: 'Price is required', price: 'This field is required' } });
 	}
 
 	User.findById(req.payload.id)
 		.then(user => {
 			if (!user) {
-				return res.status(401).json({ errors: { user: 'Unauthorized' } });
+				return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
 			}
 
 			Restaurant.findOne({ _id: req.params.id, deleted: false })
 				.then(restaurant => {
 					if (!restaurant) {
-						return res.status(401).json({ errors: { restaurant: 'Restaurant does not exist' } });
+						return res.status(401).json({
+							errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
+						});
 					}
 					if (user.role === 'owner' && restaurant.owner_id !== req.payload.id) {
-						return res
-							.status(401)
-							.json({ errors: { restaurant: 'You are not the owner of this restaurant' } });
+						return res.status(401).json({
+							errors: {
+								message: 'You are not the owner of this restaurant',
+								restaurant: 'You are not the owner of this restaurant',
+							},
+						});
 					}
 
 					var meal = new Meal();
@@ -216,7 +246,9 @@ router.post('/:id/meal', auth.required, (req, res, next) => {
 
 					meal.save()
 						.then(() => {
-							return res.status(200).json({ meal: meal.toJSON() });
+							return res
+								.status(200)
+								.json({ message: 'Meal has been added successfully', meal: meal.toJSON() });
 						})
 						.catch(next);
 				})
@@ -229,18 +261,23 @@ router.get('/:id/meal', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(user => {
 			if (!user) {
-				return res.status(401).json({ errors: { user: 'Unauthorized' } });
+				return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
 			}
 
 			Restaurant.findOne({ _id: req.params.id, deleted: false })
 				.then(async restaurant => {
 					if (!restaurant) {
-						return res.status(401).json({ errors: { restaurant: 'Restaurant does not exist' } });
+						return res.status(401).json({
+							errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
+						});
 					}
 					if (user.role === 'owner' && restaurant.owner_id !== req.payload.id) {
-						return res
-							.status(401)
-							.json({ errors: { restaurant: 'You are not the owner of this restaurant' } });
+						return res.status(401).json({
+							errors: {
+								message: 'You are not the owner of this restaurant',
+								restaurant: 'You are not the owner of this restaurant',
+							},
+						});
 					}
 
 					const row = parseInt(req.query._row) || DEFAULT_ROW;
@@ -280,29 +317,39 @@ router.get('/:id/meal/:meal_id', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(user => {
 			if (!user) {
-				return res.status(401).json({ errors: { user: 'Unauthorized' } });
+				return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
 			}
 
 			Restaurant.findById(req.params.id)
 				.then(restaurant => {
 					if (!restaurant) {
-						return res.status(401).json({ errors: { restaurant: 'Restaurant does not exist' } });
+						return res.status(401).json({
+							errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
+						});
 					}
 					if (user.role === 'owner' && restaurant.owner_id !== req.payload.id) {
-						return res
-							.status(401)
-							.json({ errors: { restaurant: 'You are not the owner of this restaurant' } });
+						return res.status(401).json({
+							errors: {
+								message: 'You are not the owner of this restaurant',
+								restaurant: 'You are not the owner of this restaurant',
+							},
+						});
 					}
 
 					Meal.findById(req.params.meal_id)
 						.then(meal => {
 							if (!meal) {
-								return res.status(401).json({ errors: { meal: 'Meal does not exist' } });
-							}
-							if (meal.restaurant_id !== req.params.id) {
 								return res
 									.status(401)
-									.json({ errors: { meal: 'This meal is not in this restaurant' } });
+									.json({ errors: { message: 'Meal does not exist', meal: 'Meal does not exist' } });
+							}
+							if (meal.restaurant_id !== req.params.id) {
+								return res.status(401).json({
+									errors: {
+										message: 'This meal is not in this restaurant',
+										meal: 'This meal is not in this restaurant',
+									},
+								});
 							}
 							return res.status(200).json({ meal: meal.toJSON() });
 						})
@@ -317,29 +364,39 @@ router.put('/:id/meal/:meal_id', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(user => {
 			if (!user) {
-				return res.status(401).json({ errors: { user: 'Unauthorized' } });
+				return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
 			}
 
 			Restaurant.findOne({ _id: req.params.id, deleted: false })
 				.then(restaurant => {
 					if (!restaurant) {
-						return res.status(401).json({ errors: { restaurant: 'Restaurant does not exist' } });
+						return res.status(401).json({
+							errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
+						});
 					}
 					if (user.role === 'owner' && restaurant.owner_id !== req.payload.id) {
-						return res
-							.status(401)
-							.json({ errors: { restaurant: 'You are not the owner of this restaurant' } });
+						return res.status(401).json({
+							errors: {
+								message: 'You are not the owner of this restaurant',
+								restaurant: 'You are not the owner of this restaurant',
+							},
+						});
 					}
 
 					Meal.findOne({ _id: req.params.meal_id, deleted: false })
 						.then(meal => {
 							if (!meal) {
-								return res.status(401).json({ errors: { meal: 'Meal does not exist' } });
-							}
-							if (meal.restaurant_id !== req.params.id) {
 								return res
 									.status(401)
-									.json({ errors: { meal: 'This meal is not in this restaurant' } });
+									.json({ errors: { message: 'Meal does not exist', meal: 'Meal does not exist' } });
+							}
+							if (meal.restaurant_id !== req.params.id) {
+								return res.status(401).json({
+									errors: {
+										message: 'This meal is not in this restaurant',
+										meal: 'This meal is not in this restaurant',
+									},
+								});
 							}
 
 							if (req.body.name) {
@@ -353,7 +410,9 @@ router.put('/:id/meal/:meal_id', auth.required, (req, res, next) => {
 							}
 							meal.save()
 								.then(() => {
-									return res.status(200).json({ meal: meal.toJSON() });
+									return res
+										.status(200)
+										.json({ message: 'Meal has been updated successfully', meal: meal.toJSON() });
 								})
 								.catch(next);
 						})
@@ -368,29 +427,39 @@ router.delete('/:id/meal/:meal_id', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(user => {
 			if (!user) {
-				return res.status(401).json({ errors: { user: 'Unauthorized' } });
+				return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
 			}
 
 			Restaurant.findById(req.params.id)
 				.then(restaurant => {
 					if (!restaurant) {
-						return res.status(401).json({ errors: { restaurant: 'Restaurant does not exist' } });
+						return res.status(401).json({
+							errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
+						});
 					}
 					if (user.role === 'owner' && restaurant.owner_id !== req.payload.id) {
-						return res
-							.status(401)
-							.json({ errors: { restaurant: 'You are not the owner of this restaurant' } });
+						return res.status(401).json({
+							errors: {
+								message: 'You are not the owner of this restaurant',
+								restaurant: 'You are not the owner of this restaurant',
+							},
+						});
 					}
 
 					Meal.findById(req.params.meal_id)
 						.then(async meal => {
 							if (!meal) {
-								return res.status(401).json({ errors: { meal: 'Meal does not exist' } });
-							}
-							if (meal.restaurant_id !== req.params.id) {
 								return res
 									.status(401)
-									.json({ errors: { meal: 'This meal is not in this restaurant' } });
+									.json({ errors: { message: 'Meal does not exist', meal: 'Meal does not exist' } });
+							}
+							if (meal.restaurant_id !== req.params.id) {
+								return res.status(401).json({
+									errors: {
+										message: 'This meal is not in this restaurant',
+										meal: 'This meal is not in this restaurant',
+									},
+								});
 							}
 
 							try {
@@ -402,7 +471,7 @@ router.delete('/:id/meal/:meal_id', auth.required, (req, res, next) => {
 							meal.deleted = true;
 							meal.save()
 								.then(() => {
-									return res.status(200).json({ success: 'The meal is removed successfully' });
+									return res.status(200).json({ message: 'The meal has been removed successfully' });
 								})
 								.catch(next);
 						})

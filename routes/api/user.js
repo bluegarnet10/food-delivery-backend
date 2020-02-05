@@ -8,10 +8,12 @@ var auth = require('../auth');
 
 router.post('/signin', (req, res, next) => {
 	if (!req.body.email) {
-		return res.status(422).json({ errors: { email: 'This field is required' } });
+		return res.status(422).json({ errors: { message: 'Email is required', email: 'This field is required' } });
 	}
 	if (!req.body.password) {
-		return res.status(422).json({ errors: { password: 'This field is required' } });
+		return res
+			.status(422)
+			.json({ errors: { message: 'Password is required', password: 'This field is required' } });
 	}
 
 	passport.authenticate('local', { session: false }, (err, user, info) => {
@@ -22,29 +24,35 @@ router.post('/signin', (req, res, next) => {
 		if (user) {
 			return res.status(200).json({ user: user.toJSON() });
 		} else {
-			return res.status(422).json({ errors: { invalidCredentials: 'Invalid Email or Password' } });
+			return res.status(422).json({
+				errors: { message: 'Invalid Email or Password', invalidCredentials: 'Invalid Email or Password' },
+			});
 		}
 	})(req, res, next);
 });
 
 router.post('/signup', (req, res, next) => {
 	if (!req.body.email) {
-		return res.status(422).json({ errors: { email: 'This field is required' } });
+		return res.status(422).json({ errors: { message: 'Email is required', email: 'This field is required' } });
 	}
 	if (!req.body.password) {
-		return res.status(422).json({ errors: { password: 'This field is required' } });
+		return res
+			.status(422)
+			.json({ errors: { message: 'Password is required', password: 'This field is required' } });
 	}
 	if (!req.body.name) {
-		return res.status(422).json({ errors: { name: 'This field is required' } });
+		return res.status(422).json({ errors: { message: 'Name is required', name: 'This field is required' } });
 	}
 	if (req.body.role !== 'user' && req.body.role !== 'owner') {
-		return res.status(422).json({ errors: { role: 'Invalid role' } });
+		return res.status(422).json({ errors: { message: 'Invalid user role', role: 'Invalid role' } });
 	}
 
 	User.findOne({ email: req.body.email })
 		.then(result => {
 			if (result) {
-				return res.status(409).json({ errors: { email: 'Email is already taken' } });
+				return res
+					.status(409)
+					.json({ errors: { message: 'Email is alrady taken', email: 'Email is already taken' } });
 			}
 
 			var user = new User();
@@ -66,7 +74,7 @@ router.get('/user', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(user => {
 			if (!user) {
-				return res.status(401).json({ errors: { user: 'Unauthorized' } });
+				return res.status(401).json({ errors: { message: 'Unauthroized', user: 'Unauthorized' } });
 			}
 			return res.status(200).json({ user: user.toUserJSON() });
 		})
