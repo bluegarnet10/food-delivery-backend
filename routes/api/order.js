@@ -25,9 +25,6 @@ router.post('/', auth.required, (req, res, next) => {
 
 	User.findById(req.payload.id)
 		.then(async user => {
-			if (!user) {
-				return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
-			}
 			if (user.role !== 'user') {
 				return res.status(401).json({ errors: { message: 'Invalid user role', user: 'Invalid user role' } });
 			}
@@ -97,16 +94,14 @@ router.post('/', auth.required, (req, res, next) => {
 				order: order.toJSON(),
 			});
 		})
-		.catch(next);
+		.catch(e => {
+			return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
+		});
 });
 
 router.get('/', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(async user => {
-			if (!user) {
-				return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
-			}
-
 			const row = parseInt(req.query._row) || DEFAULT_ROW;
 			const skipCount = req.query._page && row ? parseInt(req.query._page) * row : 0;
 			const findQuery = user.role === 'user' ? { user_id: req.payload.id } : { owner_id: req.payload.id };
@@ -133,16 +128,14 @@ router.get('/', auth.required, (req, res, next) => {
 				})
 				.catch(next);
 		})
-		.catch(next);
+		.catch(e => {
+			return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
+		});
 });
 
 router.get('/:id', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(async user => {
-			if (!user) {
-				return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
-			}
-
 			const findQuery =
 				user.role === 'user'
 					? {
@@ -156,12 +149,6 @@ router.get('/:id', auth.required, (req, res, next) => {
 
 			Order.findOne(findQuery)
 				.then(async order => {
-					if (!order) {
-						return res
-							.status(401)
-							.json({ errors: { message: 'Order does not exist', order: 'Order does not exist' } });
-					}
-
 					const histories = await History.find({ order_id: order._id });
 					const orderMeals = await OrderMeal.find({ order_id: order._id });
 
@@ -173,9 +160,15 @@ router.get('/:id', auth.required, (req, res, next) => {
 						},
 					});
 				})
-				.catch(next);
+				.catch(e => {
+					return res
+						.status(401)
+						.json({ errors: { message: 'Order does not exist', order: 'Order does not exist' } });
+				});
 		})
-		.catch(next);
+		.catch(e => {
+			return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
+		});
 });
 
 router.put('/:id', auth.required, (req, res, next) => {
@@ -187,10 +180,6 @@ router.put('/:id', auth.required, (req, res, next) => {
 
 	User.findById(req.payload.id)
 		.then(async user => {
-			if (!user) {
-				return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
-			}
-
 			const findQuery =
 				user.role === 'user'
 					? {
@@ -204,12 +193,6 @@ router.put('/:id', auth.required, (req, res, next) => {
 
 			Order.findOne(findQuery)
 				.then(async order => {
-					if (!order) {
-						return res
-							.status(404)
-							.json({ errors: { message: 'Order does not exist', order: 'Order does not exist' } });
-					}
-
 					if (user.role === 'user' && req.body.status === 'Canceled' && order.status === 'Placed') {
 						await updateStatus(order, req.body.status);
 					} else if (user.role === 'owner' && req.body.status === 'Processing' && order.status === 'Placed') {
@@ -242,9 +225,15 @@ router.put('/:id', auth.required, (req, res, next) => {
 						})
 						.catch(next);
 				})
-				.catch(next);
+				.catch(e => {
+					return res
+						.status(404)
+						.json({ errors: { message: 'Order does not exist', order: 'Order does not exist' } });
+				});
 		})
-		.catch(next);
+		.catch(e => {
+			return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
+		});
 });
 
 updateStatus = async (order, status) => {

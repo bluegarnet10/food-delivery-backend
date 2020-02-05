@@ -15,20 +15,12 @@ router.post('/', auth.required, (req, res, next) => {
 
 	User.findById(req.payload.id)
 		.then(owner => {
-			if (!owner) {
-				return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
-			}
 			if (owner.role !== 'owner') {
 				return res.status(401).json({ errors: { message: 'Invalid user role', user: 'Invalid user role' } });
 			}
 
 			User.findById(req.body.user_id)
 				.then(async user => {
-					if (!user) {
-						return res
-							.status(404)
-							.json({ errors: { message: 'Invalid user id', user: 'Invalid user id' } });
-					}
 					if (user.role !== 'user') {
 						return res
 							.status(401)
@@ -63,17 +55,18 @@ router.post('/', auth.required, (req, res, next) => {
 							.catch(next);
 					});
 				})
-				.catch(next);
+				.catch(e => {
+					return res.status(404).json({ errors: { message: 'Invalid user id', user: 'Invalid user id' } });
+				});
 		})
-		.catch(next);
+		.catch(e => {
+			return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
+		});
 });
 
 router.get('/', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(async owner => {
-			if (!owner) {
-				return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
-			}
 			if (owner.role !== 'owner') {
 				return res.status(401).json({ errors: { message: 'Invalid user role', user: 'Invalid user role' } });
 			}
@@ -106,7 +99,9 @@ router.get('/', auth.required, (req, res, next) => {
 				})
 				.catch(next);
 		})
-		.catch(next);
+		.catch(e => {
+			return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
+		});
 });
 
 router.delete('/', auth.required, (req, res, next) => {
@@ -116,28 +111,26 @@ router.delete('/', auth.required, (req, res, next) => {
 
 	User.findById(req.payload.id)
 		.then(async owner => {
-			if (!owner) {
-				return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
-			}
 			if (owner.role !== 'owner') {
 				return res.status(401).json({ errors: { message: 'Invalid user role', user: 'Invalid user role' } });
 			}
 
-			Block.findOne({ owner_id: req.payload.id, user_id: req.body.user_id }).then(result => {
-				if (!result) {
-					return res.status(401).json({
-						errors: { message: 'The user is already unblocked', block: 'The user is already unblocked' },
-					});
-				}
+			const block = await Block.findOne({ owner_id: req.payload.id, user_id: req.body.user_id });
+			if (!block) {
+				return res.status(401).json({
+					errors: { message: 'The user is already unblocked', block: 'The user is already unblocked' },
+				});
+			}
 
-				Block.remove({ owner_id: req.payload.id, user_id: req.body.user_id })
-					.then(() => {
-						return res.status(200).json({ message: 'The user has been unblocked' });
-					})
-					.catch(next);
-			});
+			Block.remove({ owner_id: req.payload.id, user_id: req.body.user_id })
+				.then(() => {
+					return res.status(200).json({ message: 'The user has been unblocked' });
+				})
+				.catch(next);
 		})
-		.catch(next);
+		.catch(e => {
+			return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
+		});
 });
 
 cancelOrders = async (owner_id, user_id) => {

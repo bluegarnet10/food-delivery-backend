@@ -19,9 +19,6 @@ router.post('/', auth.required, (req, res, next) => {
 
 	User.findById(req.payload.id)
 		.then(owner => {
-			if (!owner) {
-				return res.status(401).json({ errors: { message: 'Unauthroized', user: 'Unauthorized' } });
-			}
 			if (owner.role !== 'owner') {
 				return res.status(401).json({ errors: { message: 'Invalid user role', user: 'Invalid user role' } });
 			}
@@ -41,16 +38,14 @@ router.post('/', auth.required, (req, res, next) => {
 				})
 				.catch(next);
 		})
-		.catch(next);
+		.catch(e => {
+			return res.status(401).json({ errors: { message: 'Unauthroized', user: 'Unauthorized' } });
+		});
 });
 
 router.get('/', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(async user => {
-			if (!user) {
-				return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
-			}
-
 			const row = parseInt(req.query._row) || DEFAULT_ROW;
 			const skipCount = req.query._page && row ? parseInt(req.query._page) * row : 0;
 			const findQuery = user.role === 'user' ? { deleted: false } : { owner_id: req.payload.id, deleted: false };
@@ -79,23 +74,16 @@ router.get('/', auth.required, (req, res, next) => {
 				})
 				.catch(next);
 		})
-		.catch(next);
+		.catch(e => {
+			return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
+		});
 });
 
 router.get('/:id', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(user => {
-			if (!user) {
-				return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
-			}
-
 			Restaurant.findById(req.params.id)
 				.then(restaurant => {
-					if (!restaurant) {
-						return res.status(401).json({
-							errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
-						});
-					}
 					if (user.role === 'owner' && restaurant.owner_id !== req.payload.id) {
 						return res.status(401).json({
 							errors: {
@@ -107,25 +95,22 @@ router.get('/:id', auth.required, (req, res, next) => {
 
 					return res.status(200).json({ restaurant: restaurant.toJSON() });
 				})
-				.catch(next);
+				.catch(e => {
+					return res.status(401).json({
+						errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
+					});
+				});
 		})
-		.catch(next);
+		.catch(e => {
+			return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
+		});
 });
 
 router.put('/:id', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(user => {
-			if (!user) {
-				return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
-			}
-
 			Restaurant.findOne({ _id: req.params.id, deleted: false })
 				.then(restaurant => {
-					if (!restaurant) {
-						return res.status(401).json({
-							errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
-						});
-					}
 					if (user.role !== 'owner' || restaurant.owner_id !== req.payload.id) {
 						return res.status(401).json({
 							errors: {
@@ -151,25 +136,22 @@ router.put('/:id', auth.required, (req, res, next) => {
 						})
 						.catch(next);
 				})
-				.catch(next);
+				.catch(e => {
+					return res.status(401).json({
+						errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
+					});
+				});
 		})
-		.catch(next);
+		.catch(e => {
+			return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
+		});
 });
 
 router.delete('/:id', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(user => {
-			if (!user) {
-				return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
-			}
-
 			Restaurant.findById(req.params.id)
 				.then(async restaurant => {
-					if (!restaurant) {
-						return res.status(401).json({
-							errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
-						});
-					}
 					if (user.role !== 'owner' || restaurant.owner_id !== req.payload.id) {
 						return res.status(401).json({
 							errors: {
@@ -198,9 +180,15 @@ router.delete('/:id', auth.required, (req, res, next) => {
 						})
 						.catch(next);
 				})
-				.catch(next);
+				.catch(e => {
+					return res.status(401).json({
+						errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
+					});
+				});
 		})
-		.catch(next);
+		.catch(e => {
+			return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
+		});
 });
 
 router.post('/:id/meal', auth.required, (req, res, next) => {
@@ -218,17 +206,8 @@ router.post('/:id/meal', auth.required, (req, res, next) => {
 
 	User.findById(req.payload.id)
 		.then(user => {
-			if (!user) {
-				return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
-			}
-
 			Restaurant.findOne({ _id: req.params.id, deleted: false })
 				.then(restaurant => {
-					if (!restaurant) {
-						return res.status(401).json({
-							errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
-						});
-					}
 					if (user.role === 'owner' && restaurant.owner_id !== req.payload.id) {
 						return res.status(401).json({
 							errors: {
@@ -252,25 +231,22 @@ router.post('/:id/meal', auth.required, (req, res, next) => {
 						})
 						.catch(next);
 				})
-				.catch(next);
+				.catch(e => {
+					return res.status(401).json({
+						errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
+					});
+				});
 		})
-		.catch(next);
+		.catch(e => {
+			return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
+		});
 });
 
 router.get('/:id/meal', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(user => {
-			if (!user) {
-				return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
-			}
-
 			Restaurant.findOne({ _id: req.params.id, deleted: false })
 				.then(async restaurant => {
-					if (!restaurant) {
-						return res.status(401).json({
-							errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
-						});
-					}
 					if (user.role === 'owner' && restaurant.owner_id !== req.payload.id) {
 						return res.status(401).json({
 							errors: {
@@ -308,25 +284,22 @@ router.get('/:id/meal', auth.required, (req, res, next) => {
 						})
 						.catch(next);
 				})
-				.catch(next);
+				.catch(e => {
+					return res.status(401).json({
+						errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
+					});
+				});
 		})
-		.catch(next);
+		.catch(e => {
+			return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
+		});
 });
 
 router.get('/:id/meal/:meal_id', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(user => {
-			if (!user) {
-				return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
-			}
-
 			Restaurant.findById(req.params.id)
 				.then(restaurant => {
-					if (!restaurant) {
-						return res.status(401).json({
-							errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
-						});
-					}
 					if (user.role === 'owner' && restaurant.owner_id !== req.payload.id) {
 						return res.status(401).json({
 							errors: {
@@ -338,11 +311,6 @@ router.get('/:id/meal/:meal_id', auth.required, (req, res, next) => {
 
 					Meal.findById(req.params.meal_id)
 						.then(meal => {
-							if (!meal) {
-								return res
-									.status(401)
-									.json({ errors: { message: 'Meal does not exist', meal: 'Meal does not exist' } });
-							}
 							if (meal.restaurant_id !== req.params.id) {
 								return res.status(401).json({
 									errors: {
@@ -353,27 +321,28 @@ router.get('/:id/meal/:meal_id', auth.required, (req, res, next) => {
 							}
 							return res.status(200).json({ meal: meal.toJSON() });
 						})
-						.catch(next);
+						.catch(e => {
+							return res
+								.status(401)
+								.json({ errors: { message: 'Meal does not exist', meal: 'Meal does not exist' } });
+						});
 				})
-				.catch(next);
+				.catch(e => {
+					return res.status(401).json({
+						errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
+					});
+				});
 		})
-		.catch(next);
+		.catch(e => {
+			return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
+		});
 });
 
 router.put('/:id/meal/:meal_id', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(user => {
-			if (!user) {
-				return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
-			}
-
 			Restaurant.findOne({ _id: req.params.id, deleted: false })
 				.then(restaurant => {
-					if (!restaurant) {
-						return res.status(401).json({
-							errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
-						});
-					}
 					if (user.role === 'owner' && restaurant.owner_id !== req.payload.id) {
 						return res.status(401).json({
 							errors: {
@@ -385,11 +354,6 @@ router.put('/:id/meal/:meal_id', auth.required, (req, res, next) => {
 
 					Meal.findOne({ _id: req.params.meal_id, deleted: false })
 						.then(meal => {
-							if (!meal) {
-								return res
-									.status(401)
-									.json({ errors: { message: 'Meal does not exist', meal: 'Meal does not exist' } });
-							}
 							if (meal.restaurant_id !== req.params.id) {
 								return res.status(401).json({
 									errors: {
@@ -416,27 +380,28 @@ router.put('/:id/meal/:meal_id', auth.required, (req, res, next) => {
 								})
 								.catch(next);
 						})
-						.catch(next);
+						.catch(e => {
+							return res
+								.status(401)
+								.json({ errors: { message: 'Meal does not exist', meal: 'Meal does not exist' } });
+						});
 				})
-				.catch(next);
+				.catch(e => {
+					return res.status(401).json({
+						errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
+					});
+				});
 		})
-		.catch(next);
+		.catch(e => {
+			return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
+		});
 });
 
 router.delete('/:id/meal/:meal_id', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(user => {
-			if (!user) {
-				return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
-			}
-
 			Restaurant.findById(req.params.id)
 				.then(restaurant => {
-					if (!restaurant) {
-						return res.status(401).json({
-							errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
-						});
-					}
 					if (user.role === 'owner' && restaurant.owner_id !== req.payload.id) {
 						return res.status(401).json({
 							errors: {
@@ -448,11 +413,6 @@ router.delete('/:id/meal/:meal_id', auth.required, (req, res, next) => {
 
 					Meal.findById(req.params.meal_id)
 						.then(async meal => {
-							if (!meal) {
-								return res
-									.status(401)
-									.json({ errors: { message: 'Meal does not exist', meal: 'Meal does not exist' } });
-							}
 							if (meal.restaurant_id !== req.params.id) {
 								return res.status(401).json({
 									errors: {
@@ -475,11 +435,21 @@ router.delete('/:id/meal/:meal_id', auth.required, (req, res, next) => {
 								})
 								.catch(next);
 						})
-						.catch(next);
+						.catch(e => {
+							return res
+								.status(401)
+								.json({ errors: { message: 'Meal does not exist', meal: 'Meal does not exist' } });
+						});
 				})
-				.catch(next);
+				.catch(e => {
+					return res.status(401).json({
+						errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
+					});
+				});
 		})
-		.catch(next);
+		.catch(e => {
+			return res.status(401).json({ errors: { message: 'Unauthorized', user: 'Unauthorized' } });
+		});
 });
 
 cancelOrders = async (restaurant_id, meal_id = null) => {
