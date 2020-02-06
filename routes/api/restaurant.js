@@ -20,7 +20,7 @@ router.post('/', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(owner => {
 			if (owner.role !== 'owner') {
-				return res.status(401).json({ errors: { message: 'Invalid user role', user: 'Invalid user role' } });
+				return res.status(403).json({ errors: { message: 'Invalid user role', user: 'Invalid user role' } });
 			}
 
 			var restaurant = new Restaurant();
@@ -82,21 +82,12 @@ router.get('/', auth.required, (req, res, next) => {
 router.get('/:id', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(user => {
-			Restaurant.findById(req.params.id)
+			Restaurant.findOne({ _id: req.params.id, deleted: false })
 				.then(restaurant => {
-					if (user.role === 'owner' && restaurant.owner_id !== req.payload.id) {
-						return res.status(401).json({
-							errors: {
-								message: 'You are not the owner of this restaurant',
-								restaurant: 'You are not the owner of this restaurant',
-							},
-						});
-					}
-
 					return res.status(200).json({ restaurant: restaurant.toJSON() });
 				})
 				.catch(e => {
-					return res.status(401).json({
+					return res.status(404).json({
 						errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
 					});
 				});
@@ -112,10 +103,10 @@ router.put('/:id', auth.required, (req, res, next) => {
 			Restaurant.findOne({ _id: req.params.id, deleted: false })
 				.then(restaurant => {
 					if (user.role !== 'owner' || restaurant.owner_id !== req.payload.id) {
-						return res.status(401).json({
+						return res.status(403).json({
 							errors: {
 								message: 'You are not the owner of this restaurant',
-								restaurant: 'You are not the owner of this restaurant',
+								user: 'You are not the owner of this restaurant',
 							},
 						});
 					}
@@ -137,7 +128,7 @@ router.put('/:id', auth.required, (req, res, next) => {
 						.catch(next);
 				})
 				.catch(e => {
-					return res.status(401).json({
+					return res.status(404).json({
 						errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
 					});
 				});
@@ -150,13 +141,13 @@ router.put('/:id', auth.required, (req, res, next) => {
 router.delete('/:id', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(user => {
-			Restaurant.findById(req.params.id)
+			Restaurant.findOne({ _id: req.params.id, deleted: false })
 				.then(async restaurant => {
 					if (user.role !== 'owner' || restaurant.owner_id !== req.payload.id) {
-						return res.status(401).json({
+						return res.status(403).json({
 							errors: {
 								message: 'You are not the owner of this restaurant',
-								restaurant: 'You are not the owner of this restaurant',
+								user: 'You are not the owner of this restaurant',
 							},
 						});
 					}
@@ -181,7 +172,7 @@ router.delete('/:id', auth.required, (req, res, next) => {
 						.catch(next);
 				})
 				.catch(e => {
-					return res.status(401).json({
+					return res.status(404).json({
 						errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
 					});
 				});
@@ -208,11 +199,11 @@ router.post('/:id/meal', auth.required, (req, res, next) => {
 		.then(user => {
 			Restaurant.findOne({ _id: req.params.id, deleted: false })
 				.then(restaurant => {
-					if (user.role === 'owner' && restaurant.owner_id !== req.payload.id) {
-						return res.status(401).json({
+					if (user.role !== 'owner' || restaurant.owner_id !== req.payload.id) {
+						return res.status(403).json({
 							errors: {
 								message: 'You are not the owner of this restaurant',
-								restaurant: 'You are not the owner of this restaurant',
+								user: 'You are not the owner of this restaurant',
 							},
 						});
 					}
@@ -232,7 +223,7 @@ router.post('/:id/meal', auth.required, (req, res, next) => {
 						.catch(next);
 				})
 				.catch(e => {
-					return res.status(401).json({
+					return res.status(404).json({
 						errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
 					});
 				});
@@ -247,15 +238,6 @@ router.get('/:id/meal', auth.required, (req, res, next) => {
 		.then(user => {
 			Restaurant.findOne({ _id: req.params.id, deleted: false })
 				.then(async restaurant => {
-					if (user.role === 'owner' && restaurant.owner_id !== req.payload.id) {
-						return res.status(401).json({
-							errors: {
-								message: 'You are not the owner of this restaurant',
-								restaurant: 'You are not the owner of this restaurant',
-							},
-						});
-					}
-
 					const row = parseInt(req.query._row) || DEFAULT_ROW;
 					const skipCount = req.query._page && row ? parseInt(req.query._page) * row : 0;
 					const findQuery = { restaurant_id: req.params.id, deleted: false };
@@ -285,7 +267,7 @@ router.get('/:id/meal', auth.required, (req, res, next) => {
 						.catch(next);
 				})
 				.catch(e => {
-					return res.status(401).json({
+					return res.status(404).json({
 						errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
 					});
 				});
@@ -298,21 +280,12 @@ router.get('/:id/meal', auth.required, (req, res, next) => {
 router.get('/:id/meal/:meal_id', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(user => {
-			Restaurant.findById(req.params.id)
+			Restaurant.findOne({ _id: req.params.id, deleted: false })
 				.then(restaurant => {
-					if (user.role === 'owner' && restaurant.owner_id !== req.payload.id) {
-						return res.status(401).json({
-							errors: {
-								message: 'You are not the owner of this restaurant',
-								restaurant: 'You are not the owner of this restaurant',
-							},
-						});
-					}
-
-					Meal.findById(req.params.meal_id)
+					Meal.findOne({ _id: req.params.meal_id, deleted: false })
 						.then(meal => {
 							if (meal.restaurant_id !== req.params.id) {
-								return res.status(401).json({
+								return res.status(403).json({
 									errors: {
 										message: 'This meal is not in this restaurant',
 										meal: 'This meal is not in this restaurant',
@@ -323,12 +296,12 @@ router.get('/:id/meal/:meal_id', auth.required, (req, res, next) => {
 						})
 						.catch(e => {
 							return res
-								.status(401)
+								.status(404)
 								.json({ errors: { message: 'Meal does not exist', meal: 'Meal does not exist' } });
 						});
 				})
 				.catch(e => {
-					return res.status(401).json({
+					return res.status(404).json({
 						errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
 					});
 				});
@@ -343,11 +316,11 @@ router.put('/:id/meal/:meal_id', auth.required, (req, res, next) => {
 		.then(user => {
 			Restaurant.findOne({ _id: req.params.id, deleted: false })
 				.then(restaurant => {
-					if (user.role === 'owner' && restaurant.owner_id !== req.payload.id) {
-						return res.status(401).json({
+					if (user.role !== 'owner' || restaurant.owner_id !== req.payload.id) {
+						return res.status(403).json({
 							errors: {
 								message: 'You are not the owner of this restaurant',
-								restaurant: 'You are not the owner of this restaurant',
+								user: 'You are not the owner of this restaurant',
 							},
 						});
 					}
@@ -355,7 +328,7 @@ router.put('/:id/meal/:meal_id', auth.required, (req, res, next) => {
 					Meal.findOne({ _id: req.params.meal_id, deleted: false })
 						.then(meal => {
 							if (meal.restaurant_id !== req.params.id) {
-								return res.status(401).json({
+								return res.status(403).json({
 									errors: {
 										message: 'This meal is not in this restaurant',
 										meal: 'This meal is not in this restaurant',
@@ -382,12 +355,12 @@ router.put('/:id/meal/:meal_id', auth.required, (req, res, next) => {
 						})
 						.catch(e => {
 							return res
-								.status(401)
+								.status(404)
 								.json({ errors: { message: 'Meal does not exist', meal: 'Meal does not exist' } });
 						});
 				})
 				.catch(e => {
-					return res.status(401).json({
+					return res.status(404).json({
 						errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
 					});
 				});
@@ -400,21 +373,21 @@ router.put('/:id/meal/:meal_id', auth.required, (req, res, next) => {
 router.delete('/:id/meal/:meal_id', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(user => {
-			Restaurant.findById(req.params.id)
+			Restaurant.findOne({ _id: req.params.id, deleted: false })
 				.then(restaurant => {
-					if (user.role === 'owner' && restaurant.owner_id !== req.payload.id) {
-						return res.status(401).json({
+					if (user.role !== 'owner' || restaurant.owner_id !== req.payload.id) {
+						return res.status(403).json({
 							errors: {
 								message: 'You are not the owner of this restaurant',
-								restaurant: 'You are not the owner of this restaurant',
+								user: 'You are not the owner of this restaurant',
 							},
 						});
 					}
 
-					Meal.findById(req.params.meal_id)
+					Meal.findOne({ _id: req.params.meal_id, deleted: false })
 						.then(async meal => {
 							if (meal.restaurant_id !== req.params.id) {
-								return res.status(401).json({
+								return res.status(403).json({
 									errors: {
 										message: 'This meal is not in this restaurant',
 										meal: 'This meal is not in this restaurant',
@@ -437,12 +410,12 @@ router.delete('/:id/meal/:meal_id', auth.required, (req, res, next) => {
 						})
 						.catch(e => {
 							return res
-								.status(401)
+								.status(404)
 								.json({ errors: { message: 'Meal does not exist', meal: 'Meal does not exist' } });
 						});
 				})
 				.catch(e => {
-					return res.status(401).json({
+					return res.status(404).json({
 						errors: { message: 'Restaurant does not exist', restaurant: 'Restaurant does not exist' },
 					});
 				});

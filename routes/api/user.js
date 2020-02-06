@@ -24,7 +24,7 @@ router.post('/signin', (req, res, next) => {
 		if (user) {
 			return res.status(200).json({ user: user.toJSON() });
 		} else {
-			return res.status(422).json({
+			return res.status(401).json({
 				errors: { message: 'Invalid Email or Password', invalidCredentials: 'Invalid Email or Password' },
 			});
 		}
@@ -44,7 +44,7 @@ router.post('/signup', (req, res, next) => {
 		return res.status(422).json({ errors: { message: 'Name is required', name: 'This field is required' } });
 	}
 	if (req.body.role !== 'user' && req.body.role !== 'owner') {
-		return res.status(422).json({ errors: { message: 'Invalid user role', role: 'Invalid role' } });
+		return res.status(422).json({ errors: { message: 'Invalid user role', role: 'Invalid user role' } });
 	}
 
 	User.findOne({ email: req.body.email })
@@ -52,7 +52,7 @@ router.post('/signup', (req, res, next) => {
 			if (result) {
 				return res
 					.status(409)
-					.json({ errors: { message: 'Email is alrady taken', email: 'Email is already taken' } });
+					.json({ errors: { message: 'Email is already taken', email: 'Email is already taken' } });
 			}
 
 			var user = new User();

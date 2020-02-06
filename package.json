@@ -7,7 +7,8 @@
 	"scripts": {
 		"start": "node ./app.js",
 		"dev": "nodemon ./app.js",
-		"stop": "lsof -ti :3000 | xargs kill"
+		"stop": "lsof -ti :3000 | xargs kill",
+		"test": "mocha"
 	},
 	"dependencies": {
 		"body-parser": "^1.18.3",
@@ -30,9 +31,12 @@
 		"underscore": "1.8.3"
 	},
 	"devDependencies": {
+		"chai": "^4.2.0",
+		"chai-http": "^4.3.0",
 		"eslint": "^6.6.0",
 		"eslint-config-prettier": "^6.7.0",
 		"eslint-plugin-prettier": "^3.1.1",
+		"mocha": "^7.0.1",
 		"nodemon": "^2.0.2",
 		"prettier": "^1.19.1"
 	}

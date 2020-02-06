@@ -16,14 +16,14 @@ router.post('/', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(owner => {
 			if (owner.role !== 'owner') {
-				return res.status(401).json({ errors: { message: 'Invalid user role', user: 'Invalid user role' } });
+				return res.status(403).json({ errors: { message: 'Invalid user role', user: 'Invalid user role' } });
 			}
 
 			User.findById(req.body.user_id)
 				.then(async user => {
 					if (user.role !== 'user') {
 						return res
-							.status(401)
+							.status(403)
 							.json({ errors: { message: 'Invalid user role', user: 'Invalid user role' } });
 					}
 
@@ -112,12 +112,12 @@ router.delete('/', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(async owner => {
 			if (owner.role !== 'owner') {
-				return res.status(401).json({ errors: { message: 'Invalid user role', user: 'Invalid user role' } });
+				return res.status(403).json({ errors: { message: 'Invalid user role', user: 'Invalid user role' } });
 			}
 
 			const block = await Block.findOne({ owner_id: req.payload.id, user_id: req.body.user_id });
 			if (!block) {
-				return res.status(401).json({
+				return res.status(409).json({
 					errors: { message: 'The user is already unblocked', block: 'The user is already unblocked' },
 				});
 			}

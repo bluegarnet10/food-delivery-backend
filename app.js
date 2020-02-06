@@ -22,7 +22,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.use(require('method-override')());
-app.use(express.static(path.join(__dirname, 'client/build')));
 
 app.use(session({ secret: 'food-delivery', cookie: { maxAge: 60000 }, resave: false, saveUninitialized: false }));
 
@@ -91,3 +90,5 @@ app.use((err, req, res, next) => {
 var server = app.listen(process.env.PORT || 3000, () => {
 	console.log('Listening on port ' + server.address().port);
 });
+
+module.exports = app;

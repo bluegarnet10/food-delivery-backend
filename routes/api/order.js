@@ -26,7 +26,7 @@ router.post('/', auth.required, (req, res, next) => {
 	User.findById(req.payload.id)
 		.then(async user => {
 			if (user.role !== 'user') {
-				return res.status(401).json({ errors: { message: 'Invalid user role', user: 'Invalid user role' } });
+				return res.status(403).json({ errors: { message: 'Invalid user role', user: 'Invalid user role' } });
 			}
 
 			const restaurant = await Restaurant.findOne({ _id: req.body.restaurant_id, deleted: false });
@@ -45,7 +45,7 @@ router.post('/', auth.required, (req, res, next) => {
 
 			const block = await Block.findOne({ owner_id: owner._id, user_id: user._id });
 			if (block) {
-				return res.status(401).json({
+				return res.status(403).json({
 					errors: {
 						message: 'You are blocked to this restaurant',
 						user: 'You are blocked to this restaurant',
@@ -162,7 +162,7 @@ router.get('/:id', auth.required, (req, res, next) => {
 				})
 				.catch(e => {
 					return res
-						.status(401)
+						.status(404)
 						.json({ errors: { message: 'Order does not exist', order: 'Order does not exist' } });
 				});
 		})
